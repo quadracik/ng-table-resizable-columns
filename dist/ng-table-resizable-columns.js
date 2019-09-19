@@ -1,6 +1,6 @@
 // based on https://github.com/dobtco/jquery-resizable-columns
 angular.module('ngTableResizableColumns', [])
-.directive('ngTableResizableColumns', function() {
+  .factory('ngTableResizableColumnsHelper', function () {
 
     var parseWidth = function(node) {
         return parseFloat(node.style.width.replace('%', ''));
@@ -10,7 +10,7 @@ angular.module('ngTableResizableColumns', [])
         return (e.type.indexOf('touch') === 0) ? (e.originalEvent.touches[0] || e.originalEvent.changedTouches[0]).pageX : e.pageX;
     };
 
-    function ResizableColumns($table) {
+    function ResizableColumns($table, scope) {
         var __bind = function(fn, me){
             return function(){
                 return fn.apply(me, arguments);
@@ -25,12 +25,23 @@ angular.module('ngTableResizableColumns', [])
         resizeFromBody: true
         };
       this.$table = $table;
-      this.setHeaders();
-      this.restoreColumnWidths();
-      this.syncHandleWidths();
-      $(window).on('resize.rc', (function() {
-        return _this.syncHandleWidths();
-      }));
+      this.state = 0;
+      var unwatch = scope.$watch('params', function (newParams, oldParams) {
+        if (!newParams.isNullInstance) {
+
+          if (_this.state == 2) { //destroyed
+            return;
+          }
+          _this.setHeaders();
+          _this.restoreColumnWidths();
+          _this.syncHandleWidths();
+          _this.state = 1;
+          $(window).on('resize.rc', (function() {
+            return _this.syncHandleWidths();
+          }));
+          unwatch();
+        }
+      });
     }
 
     ResizableColumns.prototype.getColumnId = function($el) {
@@ -43,9 +54,12 @@ angular.module('ngTableResizableColumns', [])
       return this.createHandles();
     };
 
-    ResizableColumns.prototype.destroy = function() {
-      this.$handleContainer.remove();
+    ResizableColumns.prototype.destroy = function () {
+      if (this.state == 1 && this.$handleContainer) {
+        this.$handleContainer.remove();
+      }
       this.$table.removeData('resizableColumns');
+      this.state = 2;
       return $(window).off('.rc');
     };
 
@@ -137,6 +151,7 @@ angular.module('ngTableResizableColumns', [])
         right: parseWidth($rightColumn[0])
       };
       this.$table.addClass('rc-table-resizing');
+      $currentGrip.addClass('rc-handle-active');
       $(document).on('mousemove.rc touchmove.rc', function(e) {
         var difference;
         difference = (pointerX(e) - startPosition) / _this.$table.width() * 100;
@@ -146,24 +161,60 @@ angular.module('ngTableResizableColumns', [])
       return $(document).one('mouseup touchend', function() {
         $(document).off('mousemove.rc touchmove.rc');
         _this.$table.removeClass('rc-table-resizing');
+        $currentGrip.removeClass('rc-handle-active');
         _this.syncHandleWidths();
         return _this.saveColumnWidths();
       });
     };
+    return ResizableColumns;
+  })
 
+  .directive('ngTableResizableColumns', ['$timeout', 'ngTableResizableColumnsHelper', function ($timeout, ngTableResizableColumnsHelper) {
+    return {
+        restrict: 'C',
+        priority: 999,
+        require: 'ngTableDynamic',
+        link: function(scope, element, args, ngTable) {
+            var data;
+            var initPromise = null;
+            function reload() {
+                if (initPromise) {
+                    $timeout.cancel(initPromise);
+                }
+                data.destroy();
+                initPromise = $timeout(function () {
+                    data = new ngTableResizableColumnsHelper(element, scope);
+                });
+            }
+            scope.$watch('$data', reload);
+            args.ngTableDynamic.split(' with ').forEach(function (paramName) {
+                scope.$watch(paramName, reload, true);
+            });
+            data = new ngTableResizableColumnsHelper(element, scope);
+        }
+    };
+  }])
 
+  .directive('ngTableResizableColumnsDynamic', ['$timeout', 'ngTableResizableColumnsHelper', function ($timeout, ngTableResizableColumnsHelper) {
     return {
         restrict: 'C',
         priority: 999,
         require: 'ngTable',
         link: function(scope, element, args, ngTable) {
             var data;
-            scope.$watch('$data', function() {
+            var initPromise = null;
+            function reload() {
+                if (initPromise) {
+                    $timeout.cancel(initPromise);
+                }
                 data.destroy();
-                data = new ResizableColumns(element);
-            });
-            data = new ResizableColumns(element);
+                initPromise = $timeout(function () {
+                    data = new ngTableResizableColumnsHelper(element, scope);
+                });
+            }
+            scope.$watch('$data', reload);
+            scope.$watch(args.ngTable, reload, true);
+            data = new ngTableResizableColumnsHelper(element, scope);
         }
     };
-
-});
+}]);

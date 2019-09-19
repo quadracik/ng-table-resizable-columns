@@ -11,30 +11,45 @@ module.exports = (grunt) ->
         clean:
             working:
                 src: [
-                    'ng-table-resizable-columns.*'
+                    'dist/ng-table-resizable-columns.*'
                 ]
 
         uglify:
             # concat js files before minification
             js:
-                src: ['ng-table-resizable-columns.src.js']
-                dest: 'ng-table-resizable-columns.js'
+                src: ['dist/ng-table-resizable-columns.js']
+                dest: 'dist/ng-table-resizable-columns.min.js'
                 options:
                   banner: '<%= banner %>'
                   sourceMap: (fileName) ->
                     fileName.replace /\.js$/, '.map'
+
+        cssmin:
+            minify:
+                options:
+                    expand: true
+                files:
+                    "dist/ng-table-resizable-columns.min.css": ["dist/ng-table-resizable-columns.css"]
+
         concat:
             # concat js files before minification
             js:
                 src: [
                     'src/scripts/*.js'
                 ]
-                dest: 'ng-table-resizable-columns.src.js'
+                dest: 'dist/ng-table-resizable-columns.js'
+            # concat css files before minification
+            css:
+                src: [
+                    'src/css/*.css'
+                ]
+                dest: 'dist/ng-table-resizable-columns.css'
 
     grunt.loadNpmTasks 'grunt-contrib-clean'
     grunt.loadNpmTasks 'grunt-contrib-copy'
     grunt.loadNpmTasks 'grunt-contrib-uglify'
     grunt.loadNpmTasks 'grunt-contrib-concat'
+    grunt.loadNpmTasks 'grunt-contrib-cssmin'
 
     grunt.registerTask 'dev', [
         'clean'
@@ -43,4 +58,5 @@ module.exports = (grunt) ->
     grunt.registerTask 'default', [
         'dev'
         'uglify'
+        'cssmin'
     ]
