@@ -84,7 +84,7 @@ angular.module('ngTableResizableColumns', [])
         if (_this.$tableHeaders.eq(i + 1).length === 0 || (_this.$tableHeaders.eq(i).attr('data-noresize') != null) || (_this.$tableHeaders.eq(i + 1).attr('data-noresize') != null)) {
           return;
         }
-        $handle = $("<div class='rc-handle' />");
+        $handle = $("<div class='rc-handle'><div></div></div>");
         $handle.data('th', $(el));
         return $handle.appendTo(_this.$handleContainer);
       });
@@ -151,6 +151,7 @@ angular.module('ngTableResizableColumns', [])
         right: parseWidth($rightColumn[0])
       };
       this.$table.addClass('rc-table-resizing');
+      this.$handleContainer.addClass('rc-table-resizing');
       $currentGrip.addClass('rc-handle-active');
       $(document).on('mousemove.rc touchmove.rc', function(e) {
         var difference;
@@ -161,6 +162,7 @@ angular.module('ngTableResizableColumns', [])
       return $(document).one('mouseup touchend', function() {
         $(document).off('mousemove.rc touchmove.rc');
         _this.$table.removeClass('rc-table-resizing');
+        _this.$handleContainer.removeClass('rc-table-resizing');
         $currentGrip.removeClass('rc-handle-active');
         _this.syncHandleWidths();
         return _this.saveColumnWidths();

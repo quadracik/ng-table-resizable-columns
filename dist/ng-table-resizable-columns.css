@@ -1,5 +1,5 @@
 /*
-source: this plunker: http://plnkr.co/edit/syWBUA7KUIhIckV0VnW3
+based on this plunker: http://plnkr.co/edit/syWBUA7KUIhIckV0VnW3
 */
 .rc-handle-container {
     position: relative;
@@ -10,6 +10,14 @@ source: this plunker: http://plnkr.co/edit/syWBUA7KUIhIckV0VnW3
     cursor: ew-resize;
     margin-left: -3px;
     z-index: 2;
+    padding: 0 3px;
+}
+.rc-handle div {
+    width: 1px;
+    height: inherit;
+}
+.rc-handle-container:not(.rc-table-resizing) .rc-handle:hover div {
+    border: dashed gray 1px;
 }
 table.rc-table-resizing {
     cursor: ew-resize;
