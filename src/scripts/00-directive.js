@@ -34,7 +34,7 @@ angular.module('ngTableResizableColumns', [])
         customReloadEvent: config.customReloadEvent,
         scopeReloadEvent: config.customReloadEvent || DEFAULT_SCOPE_RECREATE_EVENT_NAME,
         rigidSizing: false,
-        resizeFromBody: true
+        resizeFromBody: !!config.resizeFromBody
       };
       this.$table = $table;
       this.state = 0;
@@ -89,7 +89,7 @@ angular.module('ngTableResizableColumns', [])
       return this.$tableHeaders.each(function(_, el) {
         var $el;
         $el = $(el);
-        return setWidth($el[0], $el.outerWidth() / _this.$table.width() * 100);
+        return setWidth($el[0], $el.innerWidth() * 100 / _this.$table.outerWidth());
       });
     };
 
@@ -102,7 +102,9 @@ angular.module('ngTableResizableColumns', [])
       this.$table.before((this.$handleContainer = $("<div class='rc-handle-container' />")));
       angular.element(document).injector().invoke(function($compile) {
         var scope = angular.element(_this.$handleContainer).scope();
-        $compile(_this.$handleContainer)(scope);
+        if (scope) {
+          $compile(_this.$handleContainer)(scope);
+        }
       });
       this.$tableHeaders.each(function(i, el) {
         var $handle;
@@ -120,8 +122,11 @@ angular.module('ngTableResizableColumns', [])
       var _this = this;
       if (recreateHeaders) {
         this.setHeaders();
+      } else {
+        this.assignPercentageWidths();
       }
-      return this.$handleContainer.width(this.$table.width()).find('.rc-handle').each(function(_, el) {
+      var $handles = this.$handleContainer.width(this.$table.outerWidth()).find('.rc-handle');
+      $handles.each(function(_, el) {
         var $el;
         $el = $(el);
         return $el.css({
@@ -129,6 +134,8 @@ angular.module('ngTableResizableColumns', [])
           height: _this.options.resizeFromBody ? _this.$table.height() : _this.$table.find('thead').height()
         });
       });
+      _this.$table.scope().$emit('ng-table-columns-widths-changed');
+      return $handles;
     };
 
     ResizableColumns.prototype.saveColumnWidths = function() {
@@ -200,7 +207,7 @@ angular.module('ngTableResizableColumns', [])
       $currentGrip.addClass('rc-handle-active');
       $(document).on('mousemove.rc touchmove.rc', function(e) {
         var difference;
-        difference = (pointerX(e) - startPosition) / _this.$table.width() * 100;
+        difference = (pointerX(e) - startPosition) / _this.$table.outerWidth() * 100;
         setWidth($rightColumn[0], widths.right - difference);
         return setWidth($leftColumn[0], widths.left + difference);
       });
@@ -236,6 +243,7 @@ angular.module('ngTableResizableColumns', [])
             var config = {
                 customReloadEvent: args.ntrcCustomReloadEvent,
                 saveRestoreService: args.ntrcSaveRestoreService,
+                resizeFromBody: args.ntrcResizeFromBody,
             };
             scope.$watch('$data', reload);
             args.ngTableDynamic.split(' with ').forEach(function (paramName) {
@@ -266,6 +274,7 @@ angular.module('ngTableResizableColumns', [])
             var config = {
                 customReloadEvent: args.ntrcCustomReloadEvent,
                 saveRestoreService: args.ntrcSaveRestoreService,
+                resizeFromBody: args.ntrcResizeFromBody,
             };
             scope.$watch('$data', reload);
             scope.$watch(args.ngTable, reload, true);
