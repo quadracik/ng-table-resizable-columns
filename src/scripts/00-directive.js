@@ -1,6 +1,6 @@
 // based on https://github.com/dobtco/jquery-resizable-columns
 angular.module('ngTableResizableColumns', [])
-  .factory('ngTableResizableColumnsHelper', function () {
+  .factory('ngTableResizableColumnsHelper', ['$compile', function ($compile) {
 
     var parseWidth = function(node) {
         return parseFloat(node.style.width.replace('%', ''));
@@ -100,12 +100,10 @@ angular.module('ngTableResizableColumns', [])
         _ref.remove();
       }
       this.$table.before((this.$handleContainer = $("<div class='rc-handle-container' />")));
-      angular.element(document).injector().invoke(function($compile) {
-        var scope = angular.element(_this.$handleContainer).scope();
-        if (scope) {
-          $compile(_this.$handleContainer)(scope);
-        }
-      });
+      var scope = angular.element(_this.$handleContainer).scope();
+      if (scope) {
+         $compile(_this.$handleContainer)(scope);
+      }
       this.$tableHeaders.each(function(i, el) {
         var $handle;
         if (_this.$tableHeaders.eq(i + 1).length === 0 || _this.$tableHeaders.eq(i).attr('data-noresize') || _this.$tableHeaders.eq(i + 1).attr('data-noresize')) {
@@ -221,7 +219,7 @@ angular.module('ngTableResizableColumns', [])
       });
     };
     return ResizableColumns;
-  })
+  }])
 
   .directive('ngTableResizableColumnsDynamic', ['$timeout', 'ngTableResizableColumnsHelper', function ($timeout, ngTableResizableColumnsHelper) {
     return {
